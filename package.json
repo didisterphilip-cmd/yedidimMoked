@@ -1,0 +1,22 @@
+{
+  "name": "moked-artzi",
+  "version": "1.0.0",
+  "private": true,
+  "description": "אפליקציית מוקד ארצי — טופס קריאה ויצירת הודעות",
+  "scripts": {
+    "gen:icons": "node scripts/generate-icons.mjs",
+    "assets": "capacitor-assets generate --android",
+    "sync": "cap sync android",
+    "build:apk": "npm run gen:icons && npm run assets && cap sync android && cd android && ./gradlew assembleDebug"
+  },
+  "dependencies": {
+    "@capacitor/android": "^6.2.0",
+    "@capacitor/clipboard": "^6.0.2",
+    "@capacitor/core": "^6.2.0"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^6.2.0",
+    "sharp": "^0.33.5"
+  }
+}

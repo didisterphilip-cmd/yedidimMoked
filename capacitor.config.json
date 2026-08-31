@@ -1,0 +1,8 @@
+{
+  "appId": "com.moked.artzi",
+  "appName": "מוקד ארצי",
+  "webDir": "www",
+  "android": {
+    "allowMixedContent": true
+  }
+}
