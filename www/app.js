@@ -224,6 +224,15 @@ function bindCopyButtons() {
         btn.innerHTML = '✓ הועתק';
         toast('ההודעה הועתקה');
         setTimeout(function () { btn.classList.remove('copied'); btn.innerHTML = original; }, 1600);
+        // Auto-count this call in the manual counter (once per call session)
+        if (btn.dataset.target === 'msg2') {
+          const phone = val('f_callerPhone');
+          const key = phoneKey(phone);
+          if (key && key !== sessionLoggedNumber) {
+            addManualCall(phone);
+            sessionLoggedNumber = key;
+          }
+        }
       } else {
         toast('ההעתקה נכשלה');
       }
@@ -235,6 +244,7 @@ function bindCopyButtons() {
 function clearCall() {
   ['f_callerName','f_callerPhone','f_city','f_regionManual','f_shchuna','f_address','f_vehicle','f_assist','f_notes','f_maps']
     .forEach(function (id) { document.getElementById(id).value = ''; });
+  sessionLoggedNumber = null;
   updateCityUI();
   buildMessages();
   document.getElementById('f_callerName').focus();
@@ -260,7 +270,160 @@ function toast(msg) {
     });
   });
 
+/* ============================================================
+   Calls-from-a-number tab (manual counter + native call log)
+   ============================================================ */
+const CALLS_KEY = 'moked_calls_v1';
+let sessionLoggedNumber = null;
+
+function normPhone(s) { return (s || '').replace(/\D/g, ''); }
+// Canonical key: last 9 digits, so 0501234567 / +972501234567 map to the same number
+function phoneKey(s) { const d = normPhone(s); return d.length > 9 ? d.slice(-9) : d; }
+function loadCalls() { try { return JSON.parse(localStorage.getItem(CALLS_KEY)) || {}; } catch (e) { return {}; } }
+function saveCalls(o) { localStorage.setItem(CALLS_KEY, JSON.stringify(o)); }
+
+function addManualCall(raw) {
+  const key = phoneKey(raw);
+  if (!key) return 0;
+  const calls = loadCalls();
+  const e = calls[key] || { count: 0, display: (raw || '').trim() };
+  e.count += 1;
+  if ((raw || '').trim()) e.display = raw.trim();
+  e.last = Date.now();
+  calls[key] = e;
+  saveCalls(calls);
+  return e.count;
+}
+function getManualCount(raw) {
+  const calls = loadCalls();
+  const e = calls[phoneKey(raw)];
+  return e ? e.count : 0;
+}
+
+function renderCallsList() {
+  const wrap = document.getElementById('m_list');
+  if (!wrap) return;
+  const calls = loadCalls();
+  const keys = Object.keys(calls).sort(function (a, b) {
+    return (calls[b].count - calls[a].count) || ((calls[b].last || 0) - (calls[a].last || 0));
+  });
+  if (!keys.length) { wrap.innerHTML = '<div class="num-empty">עדיין לא נרשמו שיחות</div>'; return; }
+  wrap.innerHTML = keys.map(function (k) {
+    const e = calls[k];
+    return '<div class="num-row">'
+      + '<span class="num">' + escapeHtml(e.display || k) + '</span>'
+      + '<span class="cnt">' + e.count + '</span>'
+      + '<button class="plus" data-add="' + k + '" title="הוסף שיחה">＋</button>'
+      + '<button class="del" data-del="' + k + '" title="מחק">🗑</button>'
+      + '</div>';
+  }).join('');
+}
+
+/* Native call-log plugin (only present in the installed APK) */
+function nativeCallLog() {
+  return (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.CallLog)
+    ? window.Capacitor.Plugins.CallLog : null;
+}
+function refreshNativeAvailability() {
+  const cl = nativeCallLog();
+  const btn = document.getElementById('s_checkPhone');
+  const note = document.getElementById('s_nativeMissing');
+  if (btn) btn.classList.toggle('hidden', !cl);
+  if (note) note.classList.toggle('hidden', !!cl);
+}
+async function checkPhoneNative() {
+  const cl = nativeCallLog();
+  const res = document.getElementById('s_phoneResult');
+  const raw = document.getElementById('s_number').value;
+  if (!normPhone(raw)) { toast('נא להזין מספר טלפון'); return; }
+  if (!cl) { refreshNativeAvailability(); return; }
+  res.className = 'stats-result';
+  res.textContent = 'בודק…';
+  res.classList.remove('hidden');
+  try {
+    const r = await cl.getCount({ number: normPhone(raw) });
+    const incoming = r && r.incoming != null ? r.incoming : 0;
+    const total = r && r.total != null ? r.total : null;
+    res.className = 'stats-result';
+    res.innerHTML = 'קיבלת <span class="big">' + incoming + '</span> שיחות נכנסות מהמספר הזה'
+      + (total != null ? '<br><span style="color:#6b7785;font-size:13px">סה״כ רשומות ביומן (כולל יוצאות/שלא נענו): ' + total + '</span>' : '');
+  } catch (e) {
+    res.className = 'stats-result warn';
+    res.textContent = 'לא ניתן לקרוא את יומן השיחות: ' + (e && e.message ? e.message : 'ההרשאה נדחתה');
+  }
+}
+
+function bindStatsUI() {
+  const checkPhone = document.getElementById('s_checkPhone');
+  if (checkPhone) checkPhone.addEventListener('click', checkPhoneNative);
+
+  const mAdd = document.getElementById('m_add');
+  if (mAdd) mAdd.addEventListener('click', function () {
+    const raw = document.getElementById('m_number').value;
+    if (!normPhone(raw)) { toast('נא להזין מספר טלפון'); return; }
+    const c = addManualCall(raw);
+    renderCallsList();
+    showManualResult(raw, c);
+    document.getElementById('m_number').value = '';
+  });
+
+  const mCheck = document.getElementById('m_check');
+  if (mCheck) mCheck.addEventListener('click', function () {
+    const raw = document.getElementById('m_number').value;
+    if (!normPhone(raw)) { toast('נא להזין מספר טלפון'); return; }
+    showManualResult(raw, getManualCount(raw));
+  });
+
+  const clearAll = document.getElementById('m_clearAll');
+  if (clearAll) clearAll.addEventListener('click', function () {
+    if (Object.keys(loadCalls()).length === 0) return;
+    if (confirm('למחוק את כל המונה הידני?')) {
+      saveCalls({});
+      renderCallsList();
+      document.getElementById('m_result').classList.add('hidden');
+      toast('המונה נוקה');
+    }
+  });
+
+  const list = document.getElementById('m_list');
+  if (list) list.addEventListener('click', function (ev) {
+    const addK = ev.target.getAttribute('data-add');
+    const delK = ev.target.getAttribute('data-del');
+    if (addK) {
+      const calls = loadCalls();
+      if (calls[addK]) { addManualCall(calls[addK].display || addK); renderCallsList(); }
+    } else if (delK) {
+      const calls = loadCalls();
+      delete calls[delK];
+      saveCalls(calls);
+      renderCallsList();
+    }
+  });
+}
+
+function showManualResult(raw, count) {
+  const res = document.getElementById('m_result');
+  res.className = 'stats-result';
+  res.innerHTML = 'מספר ' + escapeHtml((raw || '').trim()) + ':<br><span class="big">' + count + '</span> שיחות שנרשמו';
+  res.classList.remove('hidden');
+}
+
+/* ---- Tab switching ---- */
+function switchView(view) {
+  document.getElementById('viewCall').classList.toggle('hidden', view !== 'viewCall');
+  document.getElementById('viewStats').classList.toggle('hidden', view !== 'viewStats');
+  document.querySelectorAll('.tabbar .tab').forEach(function (t) {
+    t.classList.toggle('active', t.dataset.view === view);
+  });
+  if (view === 'viewStats') { renderCallsList(); refreshNativeAvailability(); }
+  window.scrollTo({ top: 0 });
+}
+document.querySelectorAll('.tabbar .tab').forEach(function (t) {
+  t.addEventListener('click', function () { switchView(t.dataset.view); });
+});
+
 /* ---- Init ---- */
 bindCopyButtons();
+bindStatsUI();
 updateCityUI();
 if (operator) { showMain(); } else { showSetup(); }

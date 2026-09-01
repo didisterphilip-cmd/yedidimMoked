@@ -117,6 +117,38 @@
   }
   #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
+  /* Tab bar */
+  main{padding-bottom:calc(74px + env(safe-area-inset-bottom))}
+  .tabbar{
+    position:fixed;left:0;right:0;bottom:0;z-index:40;max-width:560px;margin:0 auto;
+    background:#fff;border-top:1px solid var(--line);display:flex;
+    padding-bottom:env(safe-area-inset-bottom);
+    box-shadow:0 -2px 10px rgba(13,42,82,.06);
+  }
+  .tabbar .tab{
+    flex:1;border:0;background:transparent;font-family:inherit;cursor:pointer;
+    padding:9px 4px 8px;display:flex;flex-direction:column;align-items:center;gap:2px;
+    font-size:12px;font-weight:600;color:var(--muted);border-top:3px solid transparent;
+  }
+  .tabbar .tab .ti{font-size:21px;line-height:1}
+  .tabbar .tab.active{color:var(--navy);border-top-color:var(--orange)}
+
+  /* Stats tab */
+  .stats-sub{margin:-6px 0 14px;color:var(--muted);font-size:13px;line-height:1.4}
+  .stats-result{margin-top:14px;padding:14px;border-radius:12px;background:#f6f9fc;border:1px solid var(--line);font-size:16px;line-height:1.5}
+  .stats-result .big{font-size:30px;font-weight:800;color:var(--navy)}
+  .stats-result.warn{background:#fdf3e7;border-color:#f3d9b0}
+  .stats-note{margin-top:12px;padding:11px 13px;border-radius:10px;background:#fdf3e7;border:1px solid #f3d9b0;color:#8a5a12;font-size:13px;line-height:1.45}
+  .stats-list-head{display:flex;align-items:center;justify-content:space-between;margin:20px 0 8px;font-size:13px;font-weight:700;color:var(--muted)}
+  .link-btn{border:0;background:transparent;color:var(--blue);font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;padding:2px 4px}
+  .num-row{display:flex;align-items:center;gap:10px;padding:11px 4px;border-bottom:1px solid var(--line)}
+  .num-row:last-child{border-bottom:0}
+  .num-row .num{flex:1;min-width:0;font-weight:600;direction:ltr;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .num-row .cnt{background:var(--navy);color:#fff;border-radius:20px;min-width:30px;text-align:center;padding:3px 10px;font-weight:700;font-size:14px}
+  .num-row .plus{border:0;background:#e8f0fb;color:var(--navy);border-radius:9px;width:34px;height:34px;font-size:18px;font-weight:700;cursor:pointer}
+  .num-row .del{border:0;background:transparent;color:#c0392b;font-size:18px;cursor:pointer;padding:4px 6px}
+  .num-empty{color:var(--muted);font-size:14px;text-align:center;padding:16px 4px}
+
   .region-info{margin-top:8px;font-size:14px;font-weight:600;display:flex;align-items:center;gap:7px}
   .region-info .tag{background:#e8f5e0;color:#3f7d18;border:1px solid #cbe6b6;border-radius:20px;padding:4px 12px}
   .region-info.unknown .tag{background:#fdecec;color:#b3261e;border-color:#f5c2c0}
@@ -154,6 +186,8 @@
   </header>
 
   <main>
+   <!-- ===== TAB: New call ===== -->
+   <section id="viewCall">
     <div class="card">
       <h3>פרטי הקריאה</h3>
 
@@ -233,7 +267,56 @@
       </div>
       <div class="msg-body" id="msg3"></div>
     </div>
+   </section>
+
+   <!-- ===== TAB: Calls from a number ===== -->
+   <section id="viewStats" class="hidden">
+    <div class="card" id="phoneLogCard">
+      <h3>יומן השיחות של הטלפון</h3>
+      <p class="stats-sub">בדוק כמה שיחות קיבלת בפועל ממספר מסוים, לפי יומן השיחות של המכשיר.</p>
+      <div class="field">
+        <label for="s_number">מספר טלפון</label>
+        <input id="s_number" inputmode="tel" autocomplete="off" placeholder="לדוגמה: 0501234567" />
+      </div>
+      <button class="btn btn-primary" id="s_checkPhone">בדיקה ביומן השיחות</button>
+      <div id="s_phoneResult" class="stats-result hidden"></div>
+      <div id="s_nativeMissing" class="stats-note hidden">
+        קריאת יומן השיחות זמינה רק באפליקציה המותקנת (APK), לא בגרסת הדפדפן.
+        כאן אפשר להשתמש במונה הידני שלמטה.
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>מונה ידני</h3>
+      <p class="stats-sub">נספרות שיחות שאתה רושם. כל שיחה שאתה מעתיק (הודעה 2) נספרת אוטומטית, ואפשר גם להוסיף ידנית.</p>
+      <div class="field">
+        <label for="m_number">מספר טלפון</label>
+        <input id="m_number" inputmode="tel" autocomplete="off" placeholder="לדוגמה: 0501234567" />
+      </div>
+      <div class="actions-row" style="margin-bottom:14px">
+        <button class="btn btn-primary" id="m_add" style="flex:1">+1 רשום שיחה</button>
+        <button class="btn btn-ghost" id="m_check" style="flex:1">בדוק מספר</button>
+      </div>
+      <div id="m_result" class="stats-result hidden"></div>
+
+      <div class="stats-list-head">
+        <span>מספרים שנרשמו</span>
+        <button id="m_clearAll" class="link-btn">מחק הכל</button>
+      </div>
+      <div id="m_list"></div>
+    </div>
+   </section>
   </main>
+
+  <!-- ===== Bottom tab bar ===== -->
+  <nav class="tabbar">
+    <button class="tab active" data-view="viewCall">
+      <span class="ti">📝</span><span>קריאה חדשה</span>
+    </button>
+    <button class="tab" data-view="viewStats">
+      <span class="ti">📞</span><span>שיחות ממספר</span>
+    </button>
+  </nav>
 </div>
 
 <div id="toast"></div>
