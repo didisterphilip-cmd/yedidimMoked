@@ -117,6 +117,9 @@
   }
   #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
+  .region-info{margin-top:8px;font-size:14px;font-weight:600;display:flex;align-items:center;gap:7px}
+  .region-info .tag{background:#e8f5e0;color:#3f7d18;border:1px solid #cbe6b6;border-radius:20px;padding:4px 12px}
+  .region-info.unknown .tag{background:#fdecec;color:#b3261e;border-color:#f5c2c0}
   .hidden{display:none !important}
   .sec-title{font-size:13px;font-weight:700;color:var(--muted);margin:24px 4px 10px;letter-spacing:.3px}
 </style>
@@ -163,8 +166,18 @@
         <input id="f_callerPhone" inputmode="tel" autocomplete="off" />
       </div>
       <div class="field">
-        <label for="f_region">מרחב</label>
-        <input id="f_region" autocomplete="off" />
+        <label for="f_city">עיר</label>
+        <input id="f_city" autocomplete="off" list="cityList" placeholder="הקלד שם עיר" />
+        <div id="regionInfo" class="region-info hidden"></div>
+      </div>
+      <datalist id="cityList"></datalist>
+      <div class="field hidden" id="manualRegionField">
+        <label for="f_regionManual">מרחב (העיר לא זוהתה — הזן ידנית)</label>
+        <input id="f_regionManual" autocomplete="off" />
+      </div>
+      <div class="field hidden" id="shchunaField">
+        <label for="f_shchuna">שכונה</label>
+        <input id="f_shchuna" autocomplete="off" placeholder="לדוגמה: רמות, גילה, בית וגן" />
       </div>
       <div class="field">
         <label for="f_address">כתובת</label>
@@ -237,6 +250,7 @@
      font-size:22px;line-height:1;padding:4px 6px">×</button>
 </div>
 
+<script src="cities.js"></script>
 <script src="app.js"></script>
 <script>
   // Register the service worker (required for install + offline)
