@@ -87,10 +87,17 @@ function saveSetup() {
 /* ---- Read call form ---- */
 function val(id) { return document.getElementById(id).value.trim(); }
 
+// The caller-type dropdown appears only for a "פנצ'ר / פנצר" assist
+function isPunctureAssist(assist) {
+  const a = (assist || '').replace(/['׳"״]/g, '');
+  return a.indexOf('פנצר') !== -1;
+}
+
 function getCall() {
   const city = val('f_city');
   const detected = regionForCity(city);
   const region = detected || val('f_regionManual');
+  const assist = val('f_assist');
   return {
     callerName:  val('f_callerName'),
     callerPhone: val('f_callerPhone'),
@@ -99,10 +106,17 @@ function getCall() {
     shchuna:     isJerusalem(city) ? val('f_shchuna') : '',
     address:     val('f_address'),
     vehicle:     val('f_vehicle'),
-    assist:      val('f_assist'),
+    assist:      assist,
+    callerType:  isPunctureAssist(assist) ? val('f_callerType') : '',
     notes:       val('f_notes'),
     maps:        val('f_maps'),
   };
+}
+
+/* Show/hide the caller-type dropdown based on the assist field */
+function updateAssistUI() {
+  const show = isPunctureAssist(val('f_assist'));
+  document.getElementById('callerTypeField').classList.toggle('hidden', !show);
 }
 
 /* Show/hide the detected-region tag, manual-region box, and שכונה box */
@@ -147,10 +161,11 @@ function buildMessages() {
   if (c.notes)   l1.push(c.notes);
   const msg1 = l1.join('\n');
 
-  // Message 2
+  // Message 2 — name+phone, then (for פנצר) מבוגר/גברת, then the operator number
   let line1 = c.callerName;
   if (c.callerPhone) line1 = line1 ? (line1 + ', ' + c.callerPhone) : c.callerPhone;
-  const msg2 = [line1, op.opNum].filter(function (x) { return x !== ''; }).join('\n');
+  const msg2 = [line1, c.callerType, op.opNum]
+    .filter(function (x) { return x !== ''; }).join('\n');
 
   // Message 3
   const msg3 = c.maps;
@@ -244,8 +259,10 @@ function bindCopyButtons() {
 function clearCall() {
   ['f_callerName','f_callerPhone','f_city','f_regionManual','f_shchuna','f_address','f_vehicle','f_assist','f_notes','f_maps']
     .forEach(function (id) { document.getElementById(id).value = ''; });
+  document.getElementById('f_callerType').value = '';
   sessionLoggedNumber = null;
   updateCityUI();
+  updateAssistUI();
   buildMessages();
   document.getElementById('f_callerName').focus();
   window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -266,9 +283,11 @@ function toast(msg) {
   .forEach(function (id) {
     document.getElementById(id).addEventListener('input', function () {
       updateCityUI();
+      updateAssistUI();
       buildMessages();
     });
   });
+document.getElementById('f_callerType').addEventListener('change', buildMessages);
 
 /* ============================================================
    Calls-from-a-number tab (manual counter + native call log)
@@ -496,4 +515,5 @@ document.querySelectorAll('.case-opt').forEach(function (b) {
 bindCopyButtons();
 bindStatsUI();
 updateCityUI();
+updateAssistUI();
 if (operator) { showMain(); } else { showSetup(); }

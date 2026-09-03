@@ -67,12 +67,13 @@
 
   label{display:block;font-weight:600;font-size:14px;color:var(--navy);margin:0 0 6px}
   .field{margin-bottom:14px}
-  input,textarea{
+  input,textarea,select{
     width:100%;font-family:inherit;font-size:17px;color:var(--text);
     background:#fff;border:1.5px solid var(--line);border-radius:12px;
     padding:12px 14px;outline:none;transition:border-color .15s,box-shadow .15s;
   }
-  input:focus,textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,164,224,.15)}
+  select{appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%230d2a52' stroke-width='3'><path d='M6 9l6 6 6-6'/></svg>');background-repeat:no-repeat;background-position:left 14px center;padding-left:40px}
+  input:focus,textarea:focus,select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,164,224,.15)}
   textarea{resize:vertical;min-height:70px}
   input::placeholder,textarea::placeholder{color:#9aa6b2}
 
@@ -271,6 +272,14 @@
       <div class="field">
         <label for="f_assist">סוג הסיוע</label>
         <input id="f_assist" autocomplete="off" />
+      </div>
+      <div class="field hidden" id="callerTypeField">
+        <label for="f_callerType">מי שהתקשר</label>
+        <select id="f_callerType">
+          <option value="">— לא רלוונטי —</option>
+          <option value="מבוגר">מבוגר</option>
+          <option value="גברת">גברת</option>
+        </select>
       </div>
       <div class="field">
         <label for="f_notes">פרטים / הערות</label>
