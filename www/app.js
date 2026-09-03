@@ -69,7 +69,7 @@ function showMain() {
   mainScreen.classList.remove('hidden');
   document.getElementById('opLine').textContent =
     (operator ? (operator.name + ' · מוקדן ' + operator.opNum) : '');
-  buildMessages();
+  applyCaseType();
 }
 
 function openSetup() { showSetup(); }
@@ -225,8 +225,8 @@ function bindCopyButtons() {
         toast('ההודעה הועתקה');
         setTimeout(function () { btn.classList.remove('copied'); btn.innerHTML = original; }, 1600);
         // Auto-count this call in the manual counter (once per call session)
-        if (btn.dataset.target === 'msg2') {
-          const phone = val('f_callerPhone');
+        if (btn.dataset.countfield) {
+          const phone = val(btn.dataset.countfield);
           const key = phoneKey(phone);
           if (key && key !== sessionLoggedNumber) {
             addManualCall(phone);
@@ -420,6 +420,76 @@ function switchView(view) {
 }
 document.querySelectorAll('.tabbar .tab').forEach(function (t) {
   t.addEventListener('click', function () { switchView(t.dataset.view); });
+});
+
+/* ============================================================
+   Case types (מקרה בסיסי / משיכת רכב תקוע)
+   ============================================================ */
+const CASE_KEY = 'moked_case_v1';
+const CASE_NAMES = { basic: 'מקרה בסיסי', towing: 'משיכת רכב תקוע' };
+let caseType = 'basic';
+try { caseType = localStorage.getItem(CASE_KEY) || 'basic'; } catch (e) {}
+if (!CASE_NAMES[caseType]) caseType = 'basic';
+
+/* Build the two messages for the towing case */
+function buildTowingMessages() {
+  const op = operator || { opNum: '' };
+  const name = val('t_callerName');
+  const phone = val('t_callerPhone');
+  let line1 = name;
+  if (phone) line1 = line1 ? (line1 + ', ' + phone) : phone;
+  const contact = [line1, op.opNum].filter(function (x) { return x !== ''; }).join('\n');
+  renderMsg('tmsg1', contact);
+  renderMsg('tmsg2', val('t_maps'));
+}
+
+function clearTowing() {
+  ['t_maps', 't_vehicle', 't_callerName', 't_callerPhone']
+    .forEach(function (id) { document.getElementById(id).value = ''; });
+  sessionLoggedNumber = null;
+  buildTowingMessages();
+  document.getElementById('t_maps').focus();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function applyCaseType() {
+  document.getElementById('formBasic').classList.toggle('hidden', caseType !== 'basic');
+  document.getElementById('formTowing').classList.toggle('hidden', caseType !== 'towing');
+  const nameEl = document.getElementById('caseName');
+  if (nameEl) nameEl.textContent = CASE_NAMES[caseType] || '';
+  document.querySelectorAll('.case-opt').forEach(function (b) {
+    b.classList.toggle('active', b.dataset.case === caseType);
+  });
+  if (caseType === 'towing') buildTowingMessages(); else buildMessages();
+}
+
+function setCaseType(t) {
+  if (!CASE_NAMES[t]) return;
+  caseType = t;
+  try { localStorage.setItem(CASE_KEY, t); } catch (e) {}
+  closeCaseMenu();
+  switchView('viewCall');
+  applyCaseType();
+}
+
+function toggleCaseMenu(ev) {
+  if (ev) ev.stopPropagation();
+  const menu = document.getElementById('caseMenu');
+  const back = document.getElementById('caseBackdrop');
+  const show = menu.classList.contains('hidden');
+  menu.classList.toggle('hidden', !show);
+  back.classList.toggle('hidden', !show);
+}
+function closeCaseMenu() {
+  document.getElementById('caseMenu').classList.add('hidden');
+  document.getElementById('caseBackdrop').classList.add('hidden');
+}
+
+document.querySelectorAll('.case-opt').forEach(function (b) {
+  b.addEventListener('click', function () { setCaseType(b.dataset.case); });
+});
+['t_maps', 't_vehicle', 't_callerName', 't_callerPhone'].forEach(function (id) {
+  document.getElementById(id).addEventListener('input', buildTowingMessages);
 });
 
 /* ---- Init ---- */

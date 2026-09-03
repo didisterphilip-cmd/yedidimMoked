@@ -117,6 +117,38 @@
   }
   #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
+  /* Case-type menu */
+  #hamburger{font-size:22px}
+  .case-backdrop{position:fixed;inset:0;z-index:45;background:rgba(0,0,0,.15)}
+  .case-menu{
+    position:fixed;top:calc(58px + env(safe-area-inset-top));right:12px;z-index:46;
+    background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 8px 26px rgba(13,42,82,.22);
+    padding:8px;min-width:230px;
+  }
+  .case-menu-title{font-size:12px;font-weight:700;color:var(--muted);padding:6px 10px 8px}
+  .case-opt{
+    display:flex;align-items:center;gap:10px;width:100%;border:0;background:transparent;
+    font-family:inherit;font-size:16px;font-weight:600;color:var(--text);text-align:right;
+    padding:12px 10px;border-radius:10px;cursor:pointer;
+  }
+  .case-opt:active{background:#f1f5fa}
+  .case-opt .ck{width:18px;color:var(--ok);font-weight:800;visibility:hidden}
+  .case-opt.active{color:var(--navy)}
+  .case-opt.active .ck{visibility:visible}
+
+  .case-banner{
+    display:flex;align-items:center;gap:7px;background:#fff;border:1px solid var(--line);
+    border-radius:12px;padding:11px 14px;margin-bottom:14px;font-size:15px;color:var(--muted);
+    cursor:pointer;box-shadow:var(--shadow);
+  }
+  .case-banner strong{color:var(--navy);font-size:16px}
+  .case-banner .chev{margin-inline-start:auto;color:var(--navy);font-size:13px}
+
+  .reminder{
+    background:#fff8ec;border:1px solid #f3d9b0;color:#8a5a12;border-radius:12px;
+    padding:12px 14px;margin-bottom:14px;font-size:14px;line-height:1.5;
+  }
+
   /* Tab bar */
   main{padding-bottom:calc(74px + env(safe-area-inset-bottom))}
   .tabbar{
@@ -177,7 +209,7 @@
 <!-- ============ MAIN APP ============ -->
 <div id="mainScreen" class="app hidden">
   <header>
-    <img class="logo" src="icon.svg" alt="לוגו" />
+    <button class="gear" id="hamburger" onclick="toggleCaseMenu(event)" title="בחירת סוג מקרה" aria-label="בחירת סוג מקרה">☰</button>
     <div class="title">
       <h1>מוקד ארצי</h1>
       <div class="op" id="opLine"></div>
@@ -185,9 +217,24 @@
     <button class="gear" onclick="openSetup()" title="עריכת פרטי מוקדן">⚙</button>
   </header>
 
+  <!-- Case-type menu (opened by the hamburger) -->
+  <div id="caseBackdrop" class="case-backdrop hidden" onclick="closeCaseMenu()"></div>
+  <div id="caseMenu" class="case-menu hidden">
+    <div class="case-menu-title">בחר סוג מקרה</div>
+    <button class="case-opt" data-case="basic"><span class="ck">✓</span><span>מקרה בסיסי</span></button>
+    <button class="case-opt" data-case="towing"><span class="ck">✓</span><span>משיכת רכב תקוע</span></button>
+  </div>
+
   <main>
    <!-- ===== TAB: New call ===== -->
    <section id="viewCall">
+
+    <div class="case-banner" onclick="toggleCaseMenu(event)">
+      <span>סוג מקרה:</span> <strong id="caseName">מקרה בסיסי</strong> <span class="chev">▾</span>
+    </div>
+
+    <!-- ===== Case: מקרה בסיסי (original form) ===== -->
+    <div id="formBasic">
     <div class="card">
       <h3>פרטי הקריאה</h3>
 
@@ -254,7 +301,7 @@
     <div class="msg-card">
       <div class="msg-head">
         <span class="lbl">הודעה 2 — מתקשר ומוקדן</span>
-        <button class="copy-btn" data-target="msg2">📋 העתקה</button>
+        <button class="copy-btn" data-target="msg2" data-countfield="f_callerPhone">📋 העתקה</button>
       </div>
       <div class="msg-body" id="msg2"></div>
     </div>
@@ -267,6 +314,61 @@
       </div>
       <div class="msg-body" id="msg3"></div>
     </div>
+    </div><!-- /formBasic -->
+
+    <!-- ===== Case: משיכת רכב תקוע ===== -->
+    <div id="formTowing" class="hidden">
+    <div class="card">
+      <h3>משיכת רכב תקוע</h3>
+
+      <div class="field">
+        <label for="t_maps">מיקום נוכחי (קישור לגוגל מפות)</label>
+        <input id="t_maps" inputmode="url" autocomplete="off" placeholder="https://maps.google.com/..." />
+      </div>
+
+      <div class="reminder">
+        📸 יש לצלם <strong>4 תמונות</strong> של הרכב — מכל 4 הכיוונים, ממרחק של כ־10 מטר,
+        כך שכל הרכב נכנס בתוך התמונה.
+      </div>
+
+      <div class="field">
+        <label for="t_vehicle">סוג הרכב + דגם</label>
+        <input id="t_vehicle" autocomplete="off" />
+      </div>
+      <div class="field">
+        <label for="t_callerName">שם המתקשר</label>
+        <input id="t_callerName" autocomplete="off" />
+      </div>
+      <div class="field" style="margin-bottom:0">
+        <label for="t_callerPhone">מספר טלפון של המתקשר</label>
+        <input id="t_callerPhone" inputmode="tel" autocomplete="off" />
+      </div>
+    </div>
+
+    <div class="actions-row">
+      <button class="btn btn-ghost" onclick="clearTowing()">קריאה חדשה</button>
+    </div>
+
+    <div class="sec-title">הודעות מוכנות להעתקה</div>
+
+    <!-- Towing message 1: contact -->
+    <div class="msg-card">
+      <div class="msg-head">
+        <span class="lbl">הודעה 1 — מתקשר ומוקדן</span>
+        <button class="copy-btn" data-target="tmsg1" data-countfield="t_callerPhone">📋 העתקה</button>
+      </div>
+      <div class="msg-body" id="tmsg1"></div>
+    </div>
+
+    <!-- Towing message 2: location -->
+    <div class="msg-card">
+      <div class="msg-head">
+        <span class="lbl">הודעה 2 — מיקום</span>
+        <button class="copy-btn" data-target="tmsg2">📋 העתקה</button>
+      </div>
+      <div class="msg-body" id="tmsg2"></div>
+    </div>
+    </div><!-- /formTowing -->
    </section>
 
    <!-- ===== TAB: Calls from a number ===== -->
