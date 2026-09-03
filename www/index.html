@@ -149,6 +149,21 @@
     background:#fff8ec;border:1px solid #f3d9b0;color:#8a5a12;border-radius:12px;
     padding:12px 14px;margin-bottom:14px;font-size:14px;line-height:1.5;
   }
+  .reminder.danger{
+    background:#fdecec;border:1.5px solid #f0b4b1;color:#b3261e;font-size:15px;
+  }
+  .reminder.danger strong{color:#a01d15}
+
+  .call-row{display:flex;gap:10px}
+  .call-btn{
+    flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;
+    text-decoration:none;background:var(--ok);color:#fff;border-radius:14px;padding:12px;
+    font-weight:700;
+  }
+  .call-btn:active{filter:brightness(.93)}
+  .call-btn .cb-name{font-size:14px;opacity:.95}
+  .call-btn .cb-num{font-size:22px;letter-spacing:1px}
+  .call-btn::before{content:"📞";font-size:16px;margin-bottom:2px}
 
   /* Tab bar */
   main{padding-bottom:calc(74px + env(safe-area-inset-bottom))}
@@ -224,6 +239,7 @@
     <div class="case-menu-title">בחר סוג מקרה</div>
     <button class="case-opt" data-case="basic"><span class="ck">✓</span><span>מקרה בסיסי</span></button>
     <button class="case-opt" data-case="towing"><span class="ck">✓</span><span>משיכת רכב תקוע</span></button>
+    <button class="case-opt" data-case="elevator"><span class="ck">✓</span><span>לכודים במעלית</span></button>
   </div>
 
   <main>
@@ -378,6 +394,46 @@
       <div class="msg-body" id="tmsg2"></div>
     </div>
     </div><!-- /formTowing -->
+
+    <!-- ===== Case: לכודים במעלית ===== -->
+    <div id="formElevator" class="hidden">
+    <div class="card">
+      <h3>לכודים במעלית</h3>
+
+      <div class="field">
+        <label for="e_address">כתובת מדוייקת + עיר, בניין + כניסה + קומה</label>
+        <textarea id="e_address" placeholder="רחוב ומספר, עיר, בניין, כניסה, קומה"></textarea>
+      </div>
+      <div class="field">
+        <label for="e_people">כמה אנשים תקועים במעלית ומה מצבם</label>
+        <textarea id="e_people"></textarea>
+      </div>
+
+      <div class="reminder danger">
+        📞 <strong>יש להתקשר למד״א / איחוד הצלה על הקריאה.</strong><br>
+        <strong>אין להתקשר לכב״א!</strong>
+      </div>
+
+      <div class="call-row">
+        <a class="call-btn" href="tel:101"><span class="cb-name">מד״א</span><span class="cb-num">101</span></a>
+        <a class="call-btn" href="tel:1221"><span class="cb-name">איחוד הצלה</span><span class="cb-num">1221</span></a>
+      </div>
+    </div>
+
+    <div class="actions-row">
+      <button class="btn btn-ghost" onclick="clearElevator()">קריאה חדשה</button>
+    </div>
+
+    <div class="sec-title">הודעה מוכנה להעתקה</div>
+
+    <div class="msg-card">
+      <div class="msg-head">
+        <span class="lbl">הודעה — לכודים במעלית</span>
+        <button class="copy-btn" data-target="emsg1">📋 העתקה</button>
+      </div>
+      <div class="msg-body" id="emsg1"></div>
+    </div>
+    </div><!-- /formElevator -->
    </section>
 
    <!-- ===== TAB: Calls from a number ===== -->

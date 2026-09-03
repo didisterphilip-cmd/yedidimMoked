@@ -445,7 +445,7 @@ document.querySelectorAll('.tabbar .tab').forEach(function (t) {
    Case types (מקרה בסיסי / משיכת רכב תקוע)
    ============================================================ */
 const CASE_KEY = 'moked_case_v1';
-const CASE_NAMES = { basic: 'מקרה בסיסי', towing: 'משיכת רכב תקוע' };
+const CASE_NAMES = { basic: 'מקרה בסיסי', towing: 'משיכת רכב תקוע', elevator: 'לכודים במעלית' };
 let caseType = 'basic';
 try { caseType = localStorage.getItem(CASE_KEY) || 'basic'; } catch (e) {}
 if (!CASE_NAMES[caseType]) caseType = 'basic';
@@ -471,15 +471,35 @@ function clearTowing() {
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
+/* Build the message for the trapped-in-elevator case */
+function buildElevatorMessages() {
+  const lines = ['🚨סיוע לכודים במעלית🚨'];
+  const addr = val('e_address');
+  const people = val('e_people');
+  if (addr) lines.push(addr);
+  if (people) lines.push(people);
+  renderMsg('emsg1', lines.join('\n'));
+}
+
+function clearElevator() {
+  ['e_address', 'e_people'].forEach(function (id) { document.getElementById(id).value = ''; });
+  buildElevatorMessages();
+  document.getElementById('e_address').focus();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
 function applyCaseType() {
   document.getElementById('formBasic').classList.toggle('hidden', caseType !== 'basic');
   document.getElementById('formTowing').classList.toggle('hidden', caseType !== 'towing');
+  document.getElementById('formElevator').classList.toggle('hidden', caseType !== 'elevator');
   const nameEl = document.getElementById('caseName');
   if (nameEl) nameEl.textContent = CASE_NAMES[caseType] || '';
   document.querySelectorAll('.case-opt').forEach(function (b) {
     b.classList.toggle('active', b.dataset.case === caseType);
   });
-  if (caseType === 'towing') buildTowingMessages(); else buildMessages();
+  if (caseType === 'towing') buildTowingMessages();
+  else if (caseType === 'elevator') buildElevatorMessages();
+  else buildMessages();
 }
 
 function setCaseType(t) {
@@ -509,6 +529,9 @@ document.querySelectorAll('.case-opt').forEach(function (b) {
 });
 ['t_maps', 't_vehicle', 't_callerName', 't_callerPhone'].forEach(function (id) {
   document.getElementById(id).addEventListener('input', buildTowingMessages);
+});
+['e_address', 'e_people'].forEach(function (id) {
+  document.getElementById(id).addEventListener('input', buildElevatorMessages);
 });
 
 /* ---- Init ---- */
